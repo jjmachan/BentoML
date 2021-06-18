@@ -98,6 +98,7 @@ def start_yatai_service_grpc_server(
     s3_url,
     s3_endpoint_url,
     gcs_url,
+    abs_url,
     web_ui_log_path: str = Provide[BentoMLContainer.yatai_logging_path],
 ):
     # Lazily import grpcio for YataiSerivce gRPC related actions
@@ -116,7 +117,12 @@ def start_yatai_service_grpc_server(
     YataiServicerImpl = get_yatai_service_impl(YataiServicer)
     yatai_service = YataiServicerImpl(
         repository=create_repository(
-            repository_type, file_system_directory, s3_url, s3_endpoint_url, gcs_url
+            repository_type,
+            file_system_directory,
+            s3_url,
+            s3_endpoint_url,
+            gcs_url,
+            abs_url,
         ),
         database=DB(db_url),
     )
@@ -124,7 +130,8 @@ def start_yatai_service_grpc_server(
     # Define interceptors here
     grpc_interceptors = [PromServerInterceptor(), ServiceLatencyInterceptor()]
     server = grpc.server(
-        futures.ThreadPoolExecutor(max_workers=10), interceptors=grpc_interceptors,
+        futures.ThreadPoolExecutor(max_workers=10),
+        interceptors=grpc_interceptors,
     )
     add_YataiServicer_to_server(yatai_service, server)
     debug_mode = get_debug_mode()
